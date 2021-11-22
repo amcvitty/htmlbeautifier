@@ -63,6 +63,22 @@ describe HtmlBeautifier do
     expect(described_class.beautify(source)).to eq(expected)
   end
 
+  # This is probably a bug. It throws "Extraneous closing tag on line 6"
+  # Seems to be related to the interplay between the ERB tags, the script tag and
+  # the self-closing HTML void element.
+  it "ignores HTML fragments in javascript strings in <script> tags" do
+    source = code <<-END
+    <div class="<%= get_class %>" ></div>
+    <script>
+      var warning_message = "<%= confirm_data %>";
+      $('#img').html('<img src="/myimg.jpg" />')
+      $('#errors').html('<div class="alert alert-danger" role="alert">' + error_message + '</div>')
+    </script>
+    END
+
+    expect(described_class.beautify(source, stop_on_errors: true)).to eq(source)
+  end
+
   it "indents only the first line of code inside <script> or <style> and retains the other lines' indents relative to the first line" do
     source = code <<-END
       <script>
